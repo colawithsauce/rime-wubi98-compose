@@ -15,6 +15,9 @@ speller:
 
 translator:
   enable_sentence: true
+  enable_encoder: false
+  encode_commit_history: false
+  enable_user_dict: false
 ```
 
 This means:
@@ -23,11 +26,28 @@ This means:
 - unique candidates are not auto-committed;
 - Rime can continue composing longer input, closer to a Pinyin-style workflow.
 
-Sentence composition does not automatically add every composed sentence to your
-phrase table. This schema keeps `enable_encoder: false` and
-`enable_user_dict: false`, so it only asks Rime's table translator to build a
-candidate from existing dictionary entries. Phrase learning is controlled by the
-user dictionary / encoder settings, not by `enable_sentence` alone.
+Sentence composition and phrase learning are separate paths in Rime, but they
+can meet in a surprising way. `enable_sentence` lets the table translator build
+sentence candidates; memorization happens later through writable user-dictionary
+memory hooks.
+
+In a small schema with only the translator shown here, disabling
+`enable_user_dict`, `enable_encoder`, and `encode_commit_history` prevents this
+variant from learning the composed sentence as a phrase. If you copy this into a
+larger Wubi schema, check every `table_translator` that shares the same
+dictionary language, not only the one that has `enable_sentence: true`.
+
+For example, a copied schema may still contain translators like
+`table_translator@fixed`, `table_translator@mkst`, or reverse-lookup helpers. If
+any table translator for the same Wubi dictionary keeps a writable user
+dictionary / encoder path, committed sentence candidates can still be memorized.
+For a no-learning compose variant, set these on all such table translators:
+
+```yaml
+enable_user_dict: false
+enable_encoder: false
+encode_commit_history: false
+```
 
 ## Requirements
 
@@ -52,6 +72,15 @@ patch:
 ```
 
 Then redeploy Rime.
+
+If you merged this with an existing schema, inspect the compiled schema after
+redeploy and make sure no Wubi table translator still has phrase learning
+enabled:
+
+```sh
+rg -n "enable_user_dict|enable_encoder|encode_commit_history" \
+  ~/Library/Rime/build/wubi98_ci_compose.schema.yaml
+```
 
 On macOS with Squirrel, the user directory is usually:
 
