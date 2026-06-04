@@ -6,7 +6,7 @@ fourth code instead of committing the first candidate on the fifth key.
 ## What It Changes
 
 The schema is based on the normal `wubi98_ci` table workflow, but changes the
-core speller behavior:
+core speller behavior and adds a Lua composer:
 
 ```yaml
 speller:
@@ -14,28 +14,35 @@ speller:
   max_code_length: 0
 
 translator:
-  enable_sentence: true
+  enable_sentence: false
   enable_encoder: false
   encode_commit_history: false
   enable_user_dict: false
+
+four_code_composer:
+  chunk_size: 4
 ```
 
 This means:
 
 - the fifth code no longer commits the selected four-code candidate;
 - unique candidates are not auto-committed;
-- Rime can continue composing longer input, closer to a Pinyin-style workflow.
+- longer plain code input is composed greedily as four-code chunks first.
+
+For example, `abcdef` is composed as `abcd'ef`, not as `abc'def`, when both
+chunks can be found in the dictionary. The native table-translator sentence
+composer is disabled for this schema because it chooses a weighted sentence path
+and may prefer non-four-code splits.
 
 Sentence composition and phrase learning are separate paths in Rime, but they
-can meet in a surprising way. `enable_sentence` lets the table translator build
-sentence candidates; memorization happens later through writable user-dictionary
-memory hooks.
+can meet in a surprising way. Native `enable_sentence` lets the table translator
+build sentence candidates; memorization happens later through writable
+user-dictionary memory hooks.
 
-In a small schema with only the translator shown here, disabling
-`enable_user_dict`, `enable_encoder`, and `encode_commit_history` prevents this
-variant from learning the composed sentence as a phrase. If you copy this into a
-larger Wubi schema, check every `table_translator` that shares the same
-dictionary language, not only the one that has `enable_sentence: true`.
+This schema uses a Lua candidate instead of native `enable_sentence`, and keeps
+`enable_user_dict`, `enable_encoder`, and `encode_commit_history` disabled. If
+you copy this into a larger Wubi schema, check every `table_translator` that
+shares the same dictionary language, not only the main `translator`.
 
 For example, a copied schema may still contain translators like
 `table_translator@fixed`, `table_translator@mkst`, or reverse-lookup helpers. If
@@ -60,7 +67,10 @@ The schema references `wubi98_ci.extended`.
 
 ## Install
 
-Copy `wubi98_ci_compose.schema.yaml` into your Rime user directory.
+Copy these into your Rime user directory:
+
+- `wubi98_ci_compose.schema.yaml`
+- `lua/four_code_composer.lua`
 
 Add the schema to `default.custom.yaml`:
 
@@ -95,6 +105,7 @@ input method, so long composition quality depends heavily on the dictionary and
 Rime table translator behavior. The original fast four-code workflow is still
 better for users who prefer immediate auto-commit.
 
-Rime's table translator already supports sentence composition; this schema just
-turns that behavior on for a separate Wubi 98 variant while removing the
-four-code auto-commit boundary.
+Rime's table translator already supports sentence composition, but its weighted
+path can choose splits such as `abc'def`. This variant keeps the separate Wubi
+98 schema while replacing native sentence composition with a small four-code
+greedy Lua composer.

@@ -38,6 +38,7 @@ engine:
     - fallback_segmentor
   translators:
     - punct_translator
+    - "lua_translator@four_code_composer"
     - table_translator
   filters:
     - uniquifier
@@ -52,12 +53,17 @@ translator:
   db_class: tabledb
   initial_quality: 100000
   enable_charset_filter: false
-  enable_sentence: true
+  enable_sentence: false
   enable_encoder: false
   encode_commit_history: false
   max_phrase_length: 4
   enable_completion: false
   enable_user_dict: false
+
+four_code_composer:
+  chunk_size: 4
+  lookup_limit: 1
+  initial_quality: 10000000
 
 punctuator:
   import_preset: default
