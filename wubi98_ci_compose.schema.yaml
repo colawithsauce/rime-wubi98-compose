@@ -1,0 +1,71 @@
+schema:
+  schema_id: wubi98_ci_compose
+  name: "含词组句"
+  version: "0.1.0"
+  author:
+    - "Wang Yongmin"
+  description: |
+    Wubi 98 compose variant for Rime.
+    Requires an existing wubi98_ci.extended dictionary.
+    It disables four-code auto-selection and allows continued composition.
+
+switches:
+  - name: ascii_mode
+    reset: 0
+    states: [ 中, 英 ]
+  - name: ascii_punct
+    reset: 0
+    states: [ 。，, ．， ]
+  - name: full_shape
+    reset: 0
+    states: [ 半, 全 ]
+
+engine:
+  processors:
+    - ascii_composer
+    - recognizer
+    - key_binder
+    - speller
+    - punctuator
+    - selector
+    - navigator
+    - express_editor
+  segmentors:
+    - ascii_segmentor
+    - matcher
+    - abc_segmentor
+    - punct_segmentor
+    - fallback_segmentor
+  translators:
+    - punct_translator
+    - table_translator
+  filters:
+    - uniquifier
+
+speller:
+  auto_select: false
+  delimiter: "`"
+  max_code_length: 0
+
+translator:
+  dictionary: wubi98_ci.extended
+  db_class: tabledb
+  initial_quality: 100000
+  enable_charset_filter: false
+  enable_sentence: true
+  enable_encoder: false
+  encode_commit_history: false
+  max_phrase_length: 4
+  enable_completion: false
+  enable_user_dict: false
+
+punctuator:
+  import_preset: default
+
+key_binder:
+  import_preset: default
+
+recognizer:
+  import_preset: default
+  patterns:
+    punct: "^/([0-9]0?|[A-Za-z]+)$"

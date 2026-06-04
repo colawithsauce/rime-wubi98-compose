@@ -1,0 +1,4 @@
+patch:
+  schema_list:
+    - { schema: wubi98_ci }
+    - { schema: wubi98_ci_compose }
