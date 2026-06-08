@@ -18,16 +18,21 @@ local function split_four_first(input, chunk_size)
   return chunks
 end
 
-local function first_dict_entry(env, code)
-  if not env.mem:dict_lookup(code, false, env.lookup_limit) then
-    return nil
+local function collect_dict_entries(env, code)
+  if not env.mem:dict_lookup(code, false, env.per_chunk_limit) then
+    return {}
   end
+  local entries = {}
+  local seen = {}
   for entry in env.mem:iter_dict() do
     if entry and entry.text and entry.text ~= "" then
-      return entry
+      if not seen[entry.text] then
+        table.insert(entries, entry)
+        seen[entry.text] = true
+      end
     end
   end
-  return nil
+  return entries
 end
 
 local function translate(input, seg, env)
@@ -40,26 +45,47 @@ local function translate(input, seg, env)
     return
   end
 
-  local texts = {}
+  local entries_by_chunk = {}
   for _, code in ipairs(chunks) do
-    local entry = first_dict_entry(env, code)
-    if not entry then
+    local entries = collect_dict_entries(env, code)
+    if #entries == 0 then
       return
     end
-    table.insert(texts, entry.text)
+    table.insert(entries_by_chunk, entries)
   end
 
-  local cand = Candidate("four_code_compose", seg.start, seg._end,
-    table.concat(texts, ""), "〔四码组句〕")
-  cand.preedit = table.concat(chunks, "'")
-  cand.quality = env.initial_quality
-  yield(cand)
+  local fixed_parts = {}
+  for i = 1, #entries_by_chunk - 1 do
+    fixed_parts[i] = entries_by_chunk[i][1].text
+  end
+
+  local last_entries = entries_by_chunk[#entries_by_chunk]
+  local yielded = 0
+  for _, entry in ipairs(last_entries) do
+    if yielded >= env.max_candidates then
+      return
+    end
+    local parts = {}
+    for i = 1, #fixed_parts do
+      parts[i] = fixed_parts[i]
+    end
+    parts[#entries_by_chunk] = entry.text
+
+    local cand = Candidate("four_code_compose", seg.start, seg._end,
+      table.concat(parts, ""), "〔四码组句〕")
+    cand.preedit = table.concat(chunks, "'")
+    cand.quality = env.initial_quality - yielded
+    yield(cand)
+    yielded = yielded + 1
+  end
 end
 
 local function init(env)
   local config = env.engine.schema.config
   env.chunk_size = get_config_int(config, env.name_space .. "/chunk_size", 4)
-  env.lookup_limit = get_config_int(config, env.name_space .. "/lookup_limit", 1)
+  env.per_chunk_limit = get_config_int(config, env.name_space .. "/per_chunk_limit",
+    get_config_int(config, env.name_space .. "/lookup_limit", 5))
+  env.max_candidates = get_config_int(config, env.name_space .. "/max_candidates", 30)
   env.initial_quality = get_config_int(config, env.name_space .. "/initial_quality", 10000000)
   env.mem = Memory(env.engine, env.engine.schema, "translator")
 end

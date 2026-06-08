@@ -21,6 +21,7 @@ translator:
 
 four_code_composer:
   chunk_size: 4
+  per_chunk_limit: 5
 ```
 
 This means:
@@ -30,9 +31,11 @@ This means:
 - longer plain code input is composed greedily as four-code chunks first.
 
 For example, `abcdef` is composed as `abcd'ef`, not as `abc'def`, when both
-chunks can be found in the dictionary. The native table-translator sentence
-composer is disabled for this schema because it chooses a weighted sentence path
-and may prefer non-four-code splits.
+chunks can be found in the dictionary. Earlier chunks are fixed to their current
+first candidate, while the last chunk contributes several selectable
+alternatives. The native table-translator sentence composer is disabled for this
+schema because it chooses a weighted sentence path and may prefer non-four-code
+splits.
 
 Sentence composition and phrase learning are separate paths in Rime, but they
 can meet in a surprising way. Native `enable_sentence` lets the table translator

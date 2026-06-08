@@ -62,7 +62,8 @@ translator:
 
 four_code_composer:
   chunk_size: 4
-  lookup_limit: 1
+  per_chunk_limit: 5
+  max_candidates: 30
   initial_quality: 10000000
 
 punctuator:
