@@ -61,10 +61,15 @@ encode_commit_history: false
 
 ## Requirements
 
-This repository does not include a Wubi dictionary. It expects you already have:
+This repository is an overlay for an existing Wubi 98 Rime setup. It does not
+include the base Wubi dictionaries or the full 98wubi Lua helper suite.
+
+It expects you already have:
 
 - `wubi98_ci.dict.yaml`
 - `wubi98_ci.extended.dict.yaml`
+- the Lua helpers used by your Wubi schema, such as `Submit_text.lua`,
+  `switcher.lua`, `new_spelling.lua`, `helper.lua`, and the date/number helpers
 
 The schema references `wubi98_ci.extended`.
 
@@ -74,6 +79,15 @@ Copy these into your Rime user directory:
 
 - `wubi98_ci_compose.schema.yaml`
 - `lua/four_code_composer.lua`
+
+If your Rime user directory has no `rime.lua`, you can also copy this
+repository's minimal `rime.lua`.
+
+If you already have a `rime.lua`, keep it and merge in this line:
+
+```lua
+four_code_composer = require("four_code_composer")
+```
 
 Add the schema to `default.custom.yaml`:
 
